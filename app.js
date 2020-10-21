@@ -22,7 +22,7 @@ const usersRouter = require('./routes/users');
 const auth = require('./middlewares/auth');
 
 const { login, postUser } = require('./controllers/users');
-const { ServerError } = require('./errors/errors');
+const { ServerError, NotFoundError } = require('./errors/errors');
 
 mongoose.connect('mongodb://localhost:27017/mestodb', {
   useNewUrlParser: true,
@@ -61,16 +61,14 @@ app.post('/signup', celebrate({
 app.use('/', auth, cardsRouter);
 app.use('/', auth, usersRouter);
 
-app.use((request, response) => response.status(404).send({ message: 'Запрашиваемый ресурс не найден' }));
+app.use((request, response, next) => next(new NotFoundError('Запрашиваемый ресурс не найден')));
 
 app.use(errorLogger);
 
 app.use(errors());
 
-app.use((myError, request, response) => {
-  console.log(myError, 'before if statement');
+app.use((myError, request, response, next) => {
   if (!myError.status) { myError = new ServerError(); } // eslint-disable-line no-param-reassign
-  console.log(myError, 'after if statement');
   response.status(myError.status).send({ message: myError.message });
 });
 
