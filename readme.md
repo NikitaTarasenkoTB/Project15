@@ -3,6 +3,7 @@
 Клонирование репозитория: *git clone git@github.com:NikitaTarasenkoTB/Project15.git project15* 
 
 Публичный ip: *130.193.46.40*
+
 Домен: *bestname.students.nomoreparties.co*
 
 + Установка зависимостей: *npm install*
