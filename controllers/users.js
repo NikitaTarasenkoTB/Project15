@@ -1,37 +1,36 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
+const {
+  NotFoundError, BadRrequestError, ConflictError, UnauthorizedError,
+} = require('../errors/errors');
 
 const { JWT_SECRET = 'dev-key' } = process.env;
 
-function getUsers(request, response) {
+function getUsers(request, response, next) {
   User.find({})
     .then((usersData) => response.send({ data: usersData }))
-    .catch(() => response.status(500).send({ message: 'На сервере произошла ошибка' }));
+    .catch(next);
 }
 
-function getUser(request, response) {
+function getUser(request, response, next) {
   User.findById(request.params.id)
     .then((userData) => {
-      userData ? response.send({ data: userData }) : response.status(404).send({ message: 'Такого пользователя нет' });
-    })
-    .catch((error) => {
-      let message = 'Ошибка сервера';
-      let status = 500;
-      if (error.name === 'CastError') {
-        message = 'Введены некорректные данные';
-        status = 400;
+      if (userData) {
+        response.send({ data: userData });
+      } else {
+        throw new NotFoundError();
       }
-      response.status(status).send({ message });
-    });
+    })
+    .catch((error) => (error.name === 'CastError' ? next(new BadRrequestError()) : next(error)));
 }
 
-function postUser(request, response) { // eslint-disable-line consistent-return
+function postUser(request, response, next) { // eslint-disable-line consistent-return
   const {
     email, password, name, about, avatar,
   } = request.body;
   if (!password.trim() || password.trim().length < 8) {
-    return response.status(400).send({ message: 'Некорректный пароль' });
+    throw new BadRrequestError('Некорректный пароль');
   }
   bcrypt.hash(password, 10)
     .then((passwordHash) => User.create({
@@ -42,23 +41,16 @@ function postUser(request, response) { // eslint-disable-line consistent-return
         response.send({ data: newUserData });
       })
       .catch((error) => {
-        let { message } = error;
-        let status = 500;
         if (error.code === 11000) {
-          message = 'Почта уже зрагестрирована';
-          status = 409;
+          next(new ConflictError('Почта уже зрагестрирована'));
         } else if (error.name === 'ValidationError') {
-          status = 400;
-          message = 'Переданы некорректные данные';
-        } else {
-          status = 500;
-          message = 'Ошибка сервера';
+          next(new BadRrequestError());
         }
-        response.status(status).send({ message });
+        next(error);
       }));
 }
 
-function updateProfileName(request, response) {
+function updateProfileName(request, response, next) {
   User.findByIdAndUpdate(
     request.user._id,
     { name: request.body.name },
@@ -68,12 +60,16 @@ function updateProfileName(request, response) {
     },
   )
     .then((updatedData) => {
-      updatedData ? response.send({ data: updatedData }) : response.status(404).send({ message: 'Такого пользователя нет' });
+      if (updatedData) {
+        response.send({ data: updatedData });
+      } else {
+        throw new NotFoundError();
+      }
     })
-    .catch(() => response.status(500).send({ message: 'На сервере произошла ошибка или не пройдена валидация' }));
+    .catch(next);
 }
 
-function updateAvatar(request, response) {
+function updateAvatar(request, response, next) {
   User.findByIdAndUpdate(
     request.user._id,
     { avatar: request.body.avatar },
@@ -83,12 +79,16 @@ function updateAvatar(request, response) {
     },
   )
     .then((updatedData) => {
-      updatedData ? response.send({ data: updatedData }) : response.status(404).send({ message: 'Такого пользователя нет' });
+      if (updatedData) {
+        response.send({ data: updatedData });
+      } else {
+        throw new NotFoundError();
+      }
     })
-    .catch(() => response.status(500).send({ message: 'На сервере произошла ошибка или не пройдена валидация' }));
+    .catch(next);
 }
 
-function login(request, response) {
+function login(request, response, next) {
   const { email, password } = request.body;
   return User.findUserByCredentials(email, password)
     .then((user) => {
@@ -100,7 +100,7 @@ function login(request, response) {
       response.cookie('jwt', token, { maxAge: 3600000 * 24 * 7, httpOnly: true, sameSite: true });
       response.status(200).send({ message: 'Добро пожаловать!' });
     })
-    .catch((error) => response.status(401).send({ message: error.message }));
+    .catch((error) => next(new UnauthorizedError(error.message)));
 }
 
 module.exports = {
