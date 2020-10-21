@@ -68,7 +68,9 @@ app.use(errorLogger);
 app.use(errors());
 
 app.use((myError, request, response) => {
+  console.log(myError, 'before if statement');
   if (!myError.status) { myError = new ServerError(); } // eslint-disable-line no-param-reassign
+  console.log(myError, 'after if statement');
   response.status(myError.status).send({ message: myError.message });
 });
 
