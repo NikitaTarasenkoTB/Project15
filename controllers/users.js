@@ -29,9 +29,6 @@ function postUser(request, response, next) { // eslint-disable-line consistent-r
   const {
     email, password, name, about, avatar,
   } = request.body;
-  if (!password.trim() || password.trim().length < 8) {
-    throw new BadRrequestError('Некорректный пароль');
-  }
   bcrypt.hash(password, 10)
     .then((passwordHash) => User.create({
       email, password: passwordHash, name, about, avatar,
@@ -41,10 +38,12 @@ function postUser(request, response, next) { // eslint-disable-line consistent-r
         response.send({ data: newUserData });
       })
       .catch((error) => {
-        if (error.code === 11000) {
-          next(new ConflictError('Почта уже зрагестрирована'));
+        if (error.name = 'MongoError' && error.code === 11000) {
+          next(new ConflictError('Почта уже зарегестрирована'));
+          return;
         } else if (error.name === 'ValidationError') {
           next(new BadRrequestError());
+          return;
         }
         next(error);
       }));

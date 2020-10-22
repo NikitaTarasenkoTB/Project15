@@ -1,7 +1,7 @@
 {
-  "name": "project14",
+  "name": "project15",
   "version": "1.0.0",
-  "description": "project14",
+  "description": "project15",
   "main": "app.js",
   "scripts": {
     "dev": "nodemon app.js",
@@ -20,7 +20,6 @@
     "body-parser": "^1.19.0",
     "celebrate": "^13.0.3",
     "cookie-parser": "^1.4.5",
-    "crypto": "^1.0.1",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "express-winston": "^4.0.5",
