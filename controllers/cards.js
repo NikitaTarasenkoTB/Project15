@@ -13,7 +13,8 @@ function postCard(request, response, next) {
     .then((cardData) => response.send({ data: cardData }))
     .catch((error) => {
       if (error.name === 'ValidationError') {
-        throw new BadRrequestError();
+        next(new BadRrequestError());
+        return;
       }
       next(error);
     });
@@ -37,6 +38,7 @@ function deleteCard(request, response, next) {
     .catch((error) => {
       if (error.name === 'CastError') {
         next(new BadRrequestError());
+        return;
       }
       next(error);
     });
@@ -61,6 +63,7 @@ function addLike(request, response, next) {
     .catch((error) => {
       if (error.name === 'CastError') {
         next(new BadRrequestError());
+        return;
       }
       next(error);
     });
@@ -85,6 +88,7 @@ function removeLike(request, response, next) {
     .catch((error) => {
       if (error.name === 'CastError') {
         next(new BadRrequestError());
+        return;
       }
       next(error);
     });

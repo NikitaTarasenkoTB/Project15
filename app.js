@@ -1,6 +1,5 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const path = require('path');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const { errors, celebrate, Joi } = require('celebrate');
@@ -53,7 +52,7 @@ app.post('/signup', celebrate({
     password: Joi.string().trim().required().min(8),
     name: Joi.string().required().min(2).max(30),
     about: Joi.string().required().min(2).max(30),
-    avatar: Joi.string().required().regex(linkRegExp)
+    avatar: Joi.string().required().regex(linkRegExp),
   }),
 }), postUser);
 
@@ -66,10 +65,10 @@ app.use(errorLogger);
 
 app.use(errors());
 
-app.use((myError, request, response, next) => {
+app.use((myError, request, response, next) => { // eslint-disable-line no-unused-vars
   if (!myError.status) { myError = new ServerError(); } // eslint-disable-line no-param-reassign
   response.status(myError.status).send({ message: myError.message });
 });
 
 app.listen(PORT);
-console.log('Listening port: ' + PORT);
+console.log(`Listening port: ${PORT}`);

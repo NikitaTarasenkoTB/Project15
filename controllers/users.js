@@ -38,10 +38,10 @@ function postUser(request, response, next) { // eslint-disable-line consistent-r
         response.send({ data: newUserData });
       })
       .catch((error) => {
-        if (error.name = 'MongoError' && error.code === 11000) {
+        if (error.name === 'MongoError' && error.code === 11000) {
           next(new ConflictError('Почта уже зарегестрирована'));
           return;
-        } else if (error.name === 'ValidationError') {
+        } if (error.name === 'ValidationError') {
           next(new BadRrequestError());
           return;
         }
@@ -52,7 +52,10 @@ function postUser(request, response, next) { // eslint-disable-line consistent-r
 function updateProfileName(request, response, next) {
   User.findByIdAndUpdate(
     request.user._id,
-    { name: request.body.name },
+    {
+      name: request.body.name,
+      about: request.body.about,
+    },
     {
       new: true,
       runValidators: true,
