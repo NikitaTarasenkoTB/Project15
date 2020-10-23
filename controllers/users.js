@@ -22,7 +22,13 @@ function getUser(request, response, next) {
         throw new NotFoundError();
       }
     })
-    .catch((error) => (error.name === 'CastError' ? next(new BadRrequestError()) : next(error)));
+    .catch((error) => {
+      if (error.name === 'CastError') {
+        next(new BadRrequestError());
+        return;
+      }
+      next(error);
+    });
 }
 
 function postUser(request, response, next) { // eslint-disable-line consistent-return
