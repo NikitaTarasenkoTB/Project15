@@ -22,16 +22,19 @@ function getUser(request, response, next) {
         throw new NotFoundError();
       }
     })
-    .catch((error) => (error.name === 'CastError' ? next(new BadRrequestError()) : next(error)));
+    .catch((error) => {
+      if (error.name === 'CastError') {
+        next(new BadRrequestError());
+        return;
+      }
+      next(error);
+    });
 }
 
 function postUser(request, response, next) { // eslint-disable-line consistent-return
   const {
     email, password, name, about, avatar,
   } = request.body;
-  if (!password.trim() || password.trim().length < 8) {
-    throw new BadRrequestError('Некорректный пароль');
-  }
   bcrypt.hash(password, 10)
     .then((passwordHash) => User.create({
       email, password: passwordHash, name, about, avatar,
@@ -41,10 +44,12 @@ function postUser(request, response, next) { // eslint-disable-line consistent-r
         response.send({ data: newUserData });
       })
       .catch((error) => {
-        if (error.code === 11000) {
-          next(new ConflictError('Почта уже зрагестрирована'));
-        } else if (error.name === 'ValidationError') {
+        if (error.name === 'MongoError' && error.code === 11000) {
+          next(new ConflictError('Почта уже зарегестрирована'));
+          return;
+        } if (error.name === 'ValidationError') {
           next(new BadRrequestError());
+          return;
         }
         next(error);
       }));
@@ -53,7 +58,10 @@ function postUser(request, response, next) { // eslint-disable-line consistent-r
 function updateProfileName(request, response, next) {
   User.findByIdAndUpdate(
     request.user._id,
-    { name: request.body.name },
+    {
+      name: request.body.name,
+      about: request.body.about,
+    },
     {
       new: true,
       runValidators: true,

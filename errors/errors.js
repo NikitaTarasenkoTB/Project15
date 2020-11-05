@@ -1,6 +1,6 @@
-class MyError { // eslint-disable-line max-classes-per-file
+class MyError extends Error { // eslint-disable-line max-classes-per-file
   constructor(message, status) {
-    this.message = message;
+    super(message);
     this.status = status;
   }
 }

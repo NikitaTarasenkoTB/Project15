@@ -1,6 +1,5 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const path = require('path');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const { errors, celebrate, Joi } = require('celebrate');
@@ -23,6 +22,7 @@ const auth = require('./middlewares/auth');
 
 const { login, postUser } = require('./controllers/users');
 const { ServerError, NotFoundError } = require('./errors/errors');
+const linkRegExp = require('./regexp');
 
 mongoose.connect('mongodb://localhost:27017/mestodb', {
   useNewUrlParser: true,
@@ -30,8 +30,6 @@ mongoose.connect('mongodb://localhost:27017/mestodb', {
   useFindAndModify: false,
   useUnifiedTopology: true,
 });
-
-app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(requestLogger);
 
@@ -51,10 +49,10 @@ app.post('/signin', celebrate({
 app.post('/signup', celebrate({
   body: Joi.object().keys({
     email: Joi.string().required().email(),
-    password: Joi.string().required().min(8),
+    password: Joi.string().trim().required().min(8),
     name: Joi.string().required().min(2).max(30),
     about: Joi.string().required().min(2).max(30),
-    avatar: Joi.string().required().regex(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/), // eslint-disable-line no-useless-escape
+    avatar: Joi.string().required().regex(linkRegExp),
   }),
 }), postUser);
 
@@ -67,9 +65,10 @@ app.use(errorLogger);
 
 app.use(errors());
 
-app.use((myError, request, response, next) => {
+app.use((myError, request, response, next) => { // eslint-disable-line no-unused-vars
   if (!myError.status) { myError = new ServerError(); } // eslint-disable-line no-param-reassign
   response.status(myError.status).send({ message: myError.message });
 });
 
 app.listen(PORT);
+console.log(`Listening port: ${PORT}`);
